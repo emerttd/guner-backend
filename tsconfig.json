@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",                         // Daha güncel JS özellikleri için
+    "module": "CommonJS",                       // Node.js ile uyumlu modül sistemi
+    "rootDir": "src",                           // Kaynak kodların olduğu klasör
+    "outDir": "dist",                           // Derlenmiş JS dosyaları buraya atılır
+    "strict": true,                             // Tüm sıkı denetimleri aç
+    "esModuleInterop": true,                    // CommonJS modüllerle uyum
+    "forceConsistentCasingInFileNames": true,   // Büyük/küçük harf hassasiyeti
+    "skipLibCheck": true                        // Harici .d.ts dosyaları kontrol edilmez
+  },
+  "include": ["src"],                           // Yalnızca `src/` içindeki dosyaları derle
+  "exclude": ["node_modules"]                   // node_modules zaten dışlanmalı
+}
