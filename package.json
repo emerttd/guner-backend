@@ -18,7 +18,8 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.16.0",
-    "mongoose": "^8.15.0"
+    "mongoose": "^8.15.0",
+    "zod": "^3.25.34"
   },
   "devDependencies": {
     "@types/cors": "^2.8.18",

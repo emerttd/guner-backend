@@ -2,17 +2,21 @@ import { Request, Response } from 'express';
 import User from '../models/User';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { registerSchema, loginSchema } from '../validations/userValidation';
+
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, surname, email, password, role, branchId } = req.body;
+    const data = registerSchema.parse(req.body); // Zod validasyonu entegre edildi
+    // Zod validasyonu ile gelen verileri ayrıştır
+    const { name, surname, email, password, role, branchId } = data;
 
     const existing = await User.findOne({ email });
     if (existing) {
       res.status(400).json({ message: 'Bu e-posta zaten kayıtlı.' });
       return;
     }
-
+    // Şifreyi hashle
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
@@ -27,14 +31,19 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     await user.save();
 
     res.status(201).json({ message: 'Kayıt başarılı' });
-  } catch (err) {
-    res.status(500).json({ message: 'Sunucu hatası', error: err });
+  } catch (err: any) {
+    if (err.name === 'ZodError') {
+      res.status(400).json({ message: 'Geçersiz veri.', errors: err.errors });
+    } else {
+      res.status(500).json({ message: 'Sunucu hatası', error: err });
+    }
   }
 };
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password } = req.body;
+    const data = loginSchema.parse(req.body); // ✅ Zod validasyonu
+    const { email, password } = data;
 
     const userDoc = await User.findOne({ email });
     if (!userDoc) {
@@ -51,7 +60,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const token = jwt.sign({ id: userDoc._id, role: userDoc.role }, process.env.JWT_SECRET!, {
       expiresIn: '7d',
     });
-
+    
     const user = userDoc.toObject();
 
     res.json({
@@ -64,10 +73,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         role: user.role,
       },
     });
-  } catch (err) {
-    res.status(500).json({ message: 'Sunucu hatası', error: err });
+  } catch (err: any) {
+    if (err.name === 'ZodError') {
+      res.status(400).json({ message: 'Geçersiz veri.', errors: err.errors });
+    } else {
+      res.status(500).json({ message: 'Sunucu hatası', error: err });
+    }
   }
 };
+
 
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
   try {
