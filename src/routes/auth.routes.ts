@@ -1,13 +1,11 @@
-import express from 'express';
-import { login, register } from '../controllers/auth.controller';
+import { Router } from 'express';
+import { register, login, getAllUsers } from '../controllers/auth.controller';
+import { authenticateToken, isSuperAdmin } from '../middleware/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
-// Utility to wrap async route handlers and forward errors to Express
-const asyncHandler = (fn: any) => (req: express.Request, res: express.Response, next: express.NextFunction) =>
-  Promise.resolve(fn(req, res, next)).catch(next);
-
-router.post('/register', asyncHandler(register));
-router.post('/login', asyncHandler(login));
+router.post('/register', register);
+router.post('/login', login);
+router.get('/users', authenticateToken, isSuperAdmin, getAllUsers);
 
 export default router;

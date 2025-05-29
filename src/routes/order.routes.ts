@@ -1,17 +1,24 @@
-import express from 'express';
+import { Router } from 'express';
 import {
   createOrder,
-  getAllOrders,
-  updateOrder,
   deleteOrder,
+  updateOrder,
+  getAllOrders,
+  updateOrderStatus,
 } from '../controllers/order.controller';
-import { authenticateToken } from '../middleware/authMiddleware';
+import {
+  authenticateToken,
+  isSuperAdmin,
+  isAdminOrSuperAdmin,
+} from '../middleware/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
-router.post('/', authenticateToken, createOrder);
-router.get('/', authenticateToken, getAllOrders);
-router.put('/:id', authenticateToken, updateOrder);
-router.delete('/:id', authenticateToken, deleteOrder);
+router.post('/', authenticateToken, isSuperAdmin, createOrder);
+router.delete('/:orderId', authenticateToken, isSuperAdmin, deleteOrder);
+router.put('/:orderId', authenticateToken, isSuperAdmin, updateOrder);
+
+router.get('/', authenticateToken, isAdminOrSuperAdmin, getAllOrders);
+router.patch('/:orderId/status', authenticateToken, isAdminOrSuperAdmin, updateOrderStatus);
 
 export default router;
