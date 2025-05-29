@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IOrder extends Document {
   name: string;
   quantity: number;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'beklemede' | 'hazırlanıyor' | 'hazır'; // frontend uyumlu
   branchId: mongoose.Types.ObjectId;
   createdBy: mongoose.Types.ObjectId;
 }
@@ -14,10 +14,10 @@ const orderSchema = new Schema<IOrder>(
     quantity: { type: Number, required: true },
     status: {
       type: String,
-      enum: ['pending', 'in_progress', 'completed', 'cancelled'],
-      default: 'pending'
+      enum: ['beklemede', 'hazırlanıyor', 'hazır'],
+      default: 'beklemede'
     },
-    branchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
+    branchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true }, // 🔄 düzeltildi
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }
   },
   { timestamps: true }

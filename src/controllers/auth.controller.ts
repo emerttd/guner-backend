@@ -57,10 +57,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const token = jwt.sign({ id: userDoc._id, role: userDoc.role }, process.env.JWT_SECRET!, {
-      expiresIn: '7d',
-    });
-    
+    const token = jwt.sign(
+      { userId: userDoc._id, role: userDoc.role },
+      process.env.JWT_SECRET!,
+      { expiresIn: '7d' }
+    );
+
+
     const user = userDoc.toObject();
 
     res.json({

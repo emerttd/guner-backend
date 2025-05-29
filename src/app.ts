@@ -5,6 +5,9 @@ import cors from 'cors';
 import authRoutes from './routes/auth.routes';
 import orderRoutes from './routes/order.routes';
 import branchRoutes from './routes/branch.routes';
+import userRoutes from './routes/user.routes';
+import dashboardRoutes from './routes/dashboard.routes';
+
 
 // Ortam değişkenlerini yükle
 dotenv.config();
@@ -12,13 +15,22 @@ dotenv.config();
 const app: Application = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+  })
+);
+
 app.use(express.json()); // JSON body parse
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/branches', branchRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+
 
 // Health check endpoint
 app.get('/', (_req, res) => {

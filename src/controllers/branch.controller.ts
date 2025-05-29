@@ -21,12 +21,24 @@ export const deleteBranch = async (req: Request, res: Response): Promise<void> =
 
 export const updateBranch = async (req: Request, res: Response): Promise<void> => {
   try {
-    const updated = await BranchModel.findByIdAndUpdate(req.params.branchId, req.body, { new: true });
+    const updated = await BranchModel.findByIdAndUpdate(
+      req.params.branchId, // ✅ düzeltildi
+      { name: req.body.name },
+      { new: true }
+    );
+
+    if (!updated) {
+      res.status(404).json({ message: 'Şube bulunamadı.' });
+      return;
+    }
+
     res.status(200).json(updated);
   } catch (err: any) {
     res.status(500).json({ message: 'Şube güncellenemedi.', error: err.message });
   }
 };
+
+
 
 export const getAllBranches = async (req: Request, res: Response): Promise<void> => {
   try {

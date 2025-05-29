@@ -2,9 +2,10 @@ import { z } from 'zod';
 
 export const createOrderSchema = z.object({
   name: z.string().min(1, 'Sipariş adı gerekli.'),
-  quantity: z.number().positive('Miktar pozitif sayı olmalı.'), // can be float kanziço... calm downnn.
+  quantity: z.number().positive('Miktar pozitif sayı olmalı.'),
   status: z.enum(['beklemede', 'hazırlanıyor', 'hazır']),
-  branch: z.string().min(1, 'Şube ID gerekli.'),
+  branchId: z.string().min(1, 'Şube ID gerekli.'), // ✅ güncellendi
+  createdBy: z.string().min(1),
 });
 
 export const updateOrderStatusSchema = z.object({

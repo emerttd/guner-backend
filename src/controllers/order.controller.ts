@@ -4,9 +4,18 @@ import { AuthenticatedRequest } from '../types';
 import { createOrderSchema, updateOrderStatusSchema } from '../validations/orderValidation';
 
 
-export const createOrder = async (req: Request, res: Response): Promise<void> => {
+export const createOrder = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const data = createOrderSchema.parse({ ...req.body, status: 'beklemede' });
+    const createdBy = req.user?.userId;
+
+    if (!createdBy) {
+      res.status(401).json({ message: 'Yetkisiz' });
+      return;
+    }
+
+    // status: 'beklemede' ve createdBy backend'de zorunlu
+    const data = createOrderSchema.parse({ ...req.body, status: 'beklemede', createdBy });
+
     const newOrder = await OrderModel.create(data);
     res.status(201).json(newOrder);
   } catch (err: any) {
@@ -55,12 +64,16 @@ export const updateOrder = async (req: Request, res: Response): Promise<void> =>
 
 export const getAllOrders = async (req: Request, res: Response): Promise<void> => {
   try {
-    const orders = await OrderModel.find().populate('branch');
+    const orders = await OrderModel.find()
+      .populate('branchId') // ✅ alan adı düzeltildi
+      .populate('createdBy', 'name'); // 👤 opsiyonel, kullanıcı ismi için
     res.status(200).json(orders);
   } catch (error: any) {
+    console.error('❌ Sipariş listeleme hatası:', error);
     res.status(500).json({ message: 'Siparişler alınamadı.', error: error.message });
   }
 };
+
 
 export const updateOrderStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
