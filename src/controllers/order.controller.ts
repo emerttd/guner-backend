@@ -91,3 +91,13 @@ export const updateOrderStatus = async (req: AuthenticatedRequest, res: Response
     res.status(500).json({ message: 'Durum güncellenemedi.', error: error.message });
   }
 };
+
+export const deleteCompletedOrders = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await OrderModel.deleteMany({ status: 'hazır' });
+    res.status(200).json({ message: 'Hazır siparişler silindi.', deletedCount: result.deletedCount });
+  } catch (err: any) {
+    res.status(500).json({ message: 'Silme işlemi başarısız.', error: err.message });
+  }
+};
+
