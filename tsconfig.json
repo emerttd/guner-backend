@@ -7,7 +7,8 @@
     "strict": true,                             // Tüm sıkı denetimleri aç
     "esModuleInterop": true,                    // CommonJS modüllerle uyum
     "forceConsistentCasingInFileNames": true,   // Büyük/küçük harf hassasiyeti
-    "skipLibCheck": true                        // Harici .d.ts dosyaları kontrol edilmez
+    "skipLibCheck": true,                        // Harici .d.ts dosyaları kontrol edilmez
+    "typeRoots": ["./node_modules/@types", "./types"] // ✅ types klasörü dahil edildi
   },
   "include": ["src"],                           // Yalnızca `src/` içindeki dosyaları derle
   "exclude": ["node_modules"]                   // node_modules zaten dışlanmalı

@@ -1,25 +1,34 @@
 import { Router } from 'express';
 import {
-  createOrder,
-  deleteOrder,
-  updateOrder,
   getAllOrders,
+  createOrder,
+  updateOrder,
+  deleteOrder,
   updateOrderStatus,
-  deleteCompletedOrders,
+  deleteCompletedOrders
 } from '../controllers/order.controller';
-import {
-  authenticateToken,
-  isSuperAdmin,
-  isAdminOrSuperAdmin,
-} from '../middleware/authMiddleware';
+import { authenticateToken, isSuperAdmin, isAdmin } from '../middleware/authMiddleware';
+import { isWorker } from '../middleware/isWorker';
 
 const router = Router();
 
-router.post('/', authenticateToken, isSuperAdmin, createOrder);
-router.delete('/:orderId', authenticateToken, isSuperAdmin, deleteOrder);
+
+// Super admin + admin erişimi
+router.get('/', authenticateToken, getAllOrders);
+
+// Worker + admin + super_admin sipariş oluşturabilir
+router.post('/', authenticateToken, createOrder);
+
+// Worker dahil herkes güncelleyebilir, ama status yetkisi controller'da kontrol edilecek
+router.put('/:orderId', authenticateToken, updateOrder);
+
+// Sadece admin ve super_admin siparişi silebilir (opsiyonel olarak worker da izin alabilir)
+router.delete('/:orderId', authenticateToken, deleteOrder);
+
+// Durum güncelleme sadece admin ve super_admin → worker engellenecek
+router.put('/status/:orderId', authenticateToken, updateOrderStatus);
+
+// Sadece super admin: hazır siparişleri topluca siler
 router.delete('/cleanup/completed', authenticateToken, isSuperAdmin, deleteCompletedOrders);
-router.put('/:orderId', authenticateToken, isSuperAdmin, updateOrder);
-router.get('/', authenticateToken, isAdminOrSuperAdmin, getAllOrders);
-router.patch('/:orderId/status', authenticateToken, isAdminOrSuperAdmin, updateOrderStatus);
 
 export default router;
