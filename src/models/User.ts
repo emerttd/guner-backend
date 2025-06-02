@@ -15,8 +15,18 @@ const userSchema = new Schema<IUser>(
     surname: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ['super_admin', 'admin', 'worker'], required: true },
-    branchId: { type: Schema.Types.ObjectId, ref: 'Branch' }
+    role: {
+      type: String,
+      enum: ['super_admin', 'admin', 'worker'],
+      required: true
+    },
+    branchId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Branch',
+      required: function () {
+        return this.role === 'worker';
+      }
+    }
   },
   { timestamps: true }
 );

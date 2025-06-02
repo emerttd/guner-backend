@@ -1,3 +1,4 @@
+// src/controllers/order.controller.ts
 import { Request, Response } from 'express';
 import OrderModel from '../models/Order';
 import { createOrderSchema, updateOrderStatusSchema } from '../validations/orderValidation';
@@ -5,16 +6,21 @@ import { createOrderSchema, updateOrderStatusSchema } from '../validations/order
 export const createOrder = async (req: Request, res: Response): Promise<void> => {
   try {
     const createdBy = req.user?.userId;
+    const userRole = req.user?.role;
+    const userBranchId = req.user?.branchId;
 
     if (!createdBy) {
       res.status(401).json({ message: 'Yetkisiz' });
       return;
     }
 
+    const branchId = userRole === 'worker' ? userBranchId : req.body.branchId;
+
     const data = createOrderSchema.parse({
       ...req.body,
       status: 'beklemede',
-      createdBy
+      createdBy,
+      branchId,
     });
 
     const newOrder = await OrderModel.create(data);
@@ -30,6 +36,26 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
 
 export const deleteOrder = async (req: Request, res: Response): Promise<void> => {
   try {
+    const userRole = req.user?.role;
+    const userBranchId = req.user?.branchId;
+
+    if (userRole === 'admin') {
+      res.status(403).json({ message: 'Admin kullanıcı sipariş silemez.' });
+      return;
+    }
+
+    const order = await OrderModel.findById(req.params.orderId);
+
+    if (!order) {
+      res.status(404).json({ message: 'Sipariş bulunamadı.' });
+      return;
+    }
+
+    if (userRole === 'worker' && order.branchId.toString() !== userBranchId) {
+      res.status(403).json({ message: 'Worker yalnızca kendi şubesindeki siparişi silebilir.' });
+      return;
+    }
+
     await OrderModel.findByIdAndDelete(req.params.orderId);
     res.status(200).json({ message: 'Sipariş silindi.' });
   } catch (err: any) {
@@ -39,15 +65,28 @@ export const deleteOrder = async (req: Request, res: Response): Promise<void> =>
 
 export const updateOrder = async (req: Request, res: Response): Promise<void> => {
   try {
-    // 👇 Worker'ların durum (status) güncellemesini engelle
-    if (req.user?.role === 'worker' && 'status' in req.body) {
-      res.status(403).json({ message: 'Worker rolü sipariş durumunu değiştiremez.' });
+    const userRole = req.user?.role;
+    const userBranchId = req.user?.branchId;
+
+    const { orderId } = req.params;
+    const order = await OrderModel.findById(orderId);
+
+    if (!order) {
+      res.status(404).json({ message: 'Sipariş bulunamadı.' });
       return;
     }
 
-    const { orderId } = req.params;
+    if (userRole === 'worker') {
+      if (order.branchId.toString() !== userBranchId) {
+        res.status(403).json({ message: 'Worker yalnızca kendi şubesindeki siparişi güncelleyebilir.' });
+        return;
+      }
+      if ('status' in req.body) {
+        res.status(403).json({ message: 'Worker sipariş durumunu değiştiremez.' });
+        return;
+      }
+    }
 
-    // Eğer status varsa, validate et
     if ('status' in req.body) {
       updateOrderStatusSchema.parse({ status: req.body.status });
     }
@@ -70,12 +109,14 @@ export const updateOrder = async (req: Request, res: Response): Promise<void> =>
 
 export const getAllOrders = async (req: Request, res: Response): Promise<void> => {
   try {
+    const userRole = req.user?.role;
+    const userBranchId = req.user?.branchId;
+
     const query: any = {};
 
-    // 👇 Worker ise sadece kendi şubesindeki siparişleri görebilir
-    if (req.user?.role === 'worker') {
-      query.branchId = req.user.branchId;
-    }
+    if (userRole === 'worker') {
+      query.branchId = userBranchId;
+    } 
 
     const orders = await OrderModel.find(query)
       .populate('branchId')
@@ -90,19 +131,24 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
 
 export const updateOrderStatus = async (req: Request, res: Response): Promise<void> => {
   try {
-    if (req.user?.role === 'worker') {
-      res.status(403).json({ message: 'Worker rolü sipariş durumunu değiştiremez.' });
-      return;
-    }
+    const userRole = req.user?.role;
 
     const { orderId } = req.params;
     const { status } = updateOrderStatusSchema.parse(req.body);
 
-    const updated = await OrderModel.findByIdAndUpdate(orderId, { status }, { new: true });
-    if (!updated) {
+    const order = await OrderModel.findById(orderId);
+
+    if (!order) {
       res.status(404).json({ message: 'Sipariş bulunamadı.' });
       return;
     }
+
+    if (userRole === 'worker') {
+      res.status(403).json({ message: 'Worker sipariş durumunu değiştiremez.' });
+      return;
+    }
+
+    const updated = await OrderModel.findByIdAndUpdate(orderId, { status }, { new: true });
 
     res.status(200).json({ message: 'Sipariş durumu güncellendi.', order: updated });
   } catch (error: any) {
@@ -112,9 +158,23 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
 
 export const deleteCompletedOrders = async (req: Request, res: Response): Promise<void> => {
   try {
+    const userRole = req.user?.role;
+
+    if (userRole !== 'super_admin') {
+      res.status(403).json({ message: 'Bu işlem sadece super admin tarafından yapılabilir.' });
+      return;
+    }
+
     const result = await OrderModel.deleteMany({ status: 'hazır' });
-    res.status(200).json({ message: 'Hazır siparişler silindi.', deletedCount: result.deletedCount });
-  } catch (err: any) {
-    res.status(500).json({ message: 'Silme işlemi başarısız.', error: err.message });
+
+    res.status(200).json({ message: `${result.deletedCount} hazır siparişler silindi.` });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Hazır siparişler silinemedi.', error: error.message });
   }
 };
+
+// Bu kod, sipariş yönetimi için gerekli CRUD işlemlerini ve yetkilendirme kontrollerini içerir.
+// Her işlem için uygun hata yakalama ve yanıt döndürme mekanizmaları da eklenmiştir.
+// Ayrıca, worker rolüne sahip kullanıcıların sadece kendi şubelerindeki siparişleri yönetebilmeleri için gerekli kontroller yapılmıştır.
+// Bu sayede, sistemdeki siparişlerin güvenli ve düzenli bir şekilde yönetilmesi sağlanır.
+// Ayrıca, super admin ve admin kullanıcılarının yetkileri de doğru bir şekilde kontrol edilmiştir.
