@@ -4,11 +4,9 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { registerSchema, loginSchema } from '../validations/userValidation';
 
-
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const data = registerSchema.parse(req.body); // Zod validasyonu entegre edildi
-    // Zod validasyonu ile gelen verileri ayrıştır
+    const data = registerSchema.parse(req.body);
     const { name, surname, email, password, role, branchId } = data;
 
     const existing = await User.findOne({ email });
@@ -16,7 +14,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       res.status(400).json({ message: 'Bu e-posta zaten kayıtlı.' });
       return;
     }
-    // Şifreyi hashle
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
@@ -42,7 +40,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const data = loginSchema.parse(req.body); // ✅ Zod validasyonu
+    const data = loginSchema.parse(req.body);
     const { email, password } = data;
 
     const userDoc = await User.findOne({ email });
@@ -57,12 +55,18 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const token = jwt.sign(
-      { userId: userDoc._id, role: userDoc.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
-    );
+    const tokenPayload: any = {
+      userId: userDoc._id,
+      role: userDoc.role,
+    };
 
+    if (userDoc.role === 'worker' && userDoc.branchId) {
+      tokenPayload.branchId = userDoc.branchId.toString();
+    }
+
+    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET!, {
+      expiresIn: '7d'
+    });
 
     const user = userDoc.toObject();
 
@@ -74,7 +78,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         surname: user.surname,
         email: user.email,
         role: user.role,
-      },
+        branchId: user.branchId || null // ✅ branchId frontend'e de gönderilir
+      }
     });
   } catch (err: any) {
     if (err.name === 'ZodError') {
@@ -84,7 +89,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
   }
 };
-
 
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
   try {

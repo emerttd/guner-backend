@@ -23,7 +23,7 @@ export const authenticateToken = async (
       return;
     }
 
-    (req as AuthenticatedRequest).user = {
+    (req as unknown as AuthenticatedRequest).user = {
       userId: (user._id as mongoose.Types.ObjectId).toHexString(),
       role: user.role,
     };
@@ -39,7 +39,7 @@ export const isSuperAdmin = (
   res: Response,
   next: NextFunction
 ): void => {
-  const user = (req as AuthenticatedRequest).user;
+  const user = (req as unknown as AuthenticatedRequest).user;
   if (user?.role !== 'super_admin') {
     res.status(403).json({ message: 'Bu işlem için yetkiniz yok (super_admin gerekli).' });
     return;
@@ -52,7 +52,7 @@ export const isAdmin = (
   res: Response,
   next: NextFunction
 ): void => {
-  const user = (req as AuthenticatedRequest).user;
+  const user = (req as unknown as AuthenticatedRequest).user;
   if (user?.role !== 'admin') {
     res.status(403).json({ message: 'Bu işlem için yetkiniz yok (admin gerekli).' });
     return;
@@ -65,7 +65,7 @@ export const isAdminOrSuperAdmin = (
   res: Response,
   next: NextFunction
 ): void => {
-  const user = (req as AuthenticatedRequest).user;
+  const user = (req as unknown as AuthenticatedRequest).user;
   if (user?.role !== 'admin' && user?.role !== 'super_admin') {
     res.status(403).json({ message: 'Bu işlem için admin ya da super_admin yetkisi gerekli.' });
     return;

@@ -28,7 +28,8 @@ export const getDashboardSummary = async (_req: Request, res: Response) => {
       users: {
         total: totalUsers,
         admins,
-        superAdmins
+        superAdmins,
+        workers: await User.countDocuments({ role: 'worker' })
       },
       branches: {
         total: totalBranches

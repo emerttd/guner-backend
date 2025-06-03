@@ -17,10 +17,11 @@ export const createAdmin = async (req: Request, res: Response): Promise<void> =>
     }
 
     // Geçerli rol kontrolü
-    if (!['admin', 'super_admin'].includes(role)) {
+    if (!['admin', 'super_admin', 'worker'].includes(role)) {
       res.status(400).json({ message: 'Geçersiz rol.' });
       return;
     }
+
 
     const hashedPassword = await bcrypt.hash(password, 10);
 

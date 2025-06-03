@@ -12,6 +12,6 @@ const router = Router();
 router.post('/', authenticateToken, isSuperAdmin, createBranch);
 router.delete('/:branchId', authenticateToken, isSuperAdmin, deleteBranch);
 router.put('/:branchId', authenticateToken, isSuperAdmin, updateBranch);
-router.get('/', authenticateToken, isSuperAdmin, getAllBranches);
+router.get('/', authenticateToken, getAllBranches);
 
 export default router;

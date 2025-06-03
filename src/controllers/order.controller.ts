@@ -14,14 +14,15 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const branchId = userRole === 'worker' ? userBranchId : req.body.branchId;
-
-    const data = createOrderSchema.parse({
-      ...req.body,
+    const rawData = {
+      name: req.body.name,
+      quantity: req.body.quantity,
       status: 'beklemede',
       createdBy,
-      branchId,
-    });
+      branchId: userRole === 'worker' ? userBranchId : req.body.branchId,
+    };
+
+    const data = createOrderSchema.parse(rawData);
 
     const newOrder = await OrderModel.create(data);
     res.status(201).json(newOrder);
@@ -172,9 +173,3 @@ export const deleteCompletedOrders = async (req: Request, res: Response): Promis
     res.status(500).json({ message: 'Hazır siparişler silinemedi.', error: error.message });
   }
 };
-
-// Bu kod, sipariş yönetimi için gerekli CRUD işlemlerini ve yetkilendirme kontrollerini içerir.
-// Her işlem için uygun hata yakalama ve yanıt döndürme mekanizmaları da eklenmiştir.
-// Ayrıca, worker rolüne sahip kullanıcıların sadece kendi şubelerindeki siparişleri yönetebilmeleri için gerekli kontroller yapılmıştır.
-// Bu sayede, sistemdeki siparişlerin güvenli ve düzenli bir şekilde yönetilmesi sağlanır.
-// Ayrıca, super admin ve admin kullanıcılarının yetkileri de doğru bir şekilde kontrol edilmiştir.
