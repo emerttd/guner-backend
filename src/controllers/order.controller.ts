@@ -1,9 +1,14 @@
 // src/controllers/order.controller.ts
-import { Request, Response } from 'express';
+import express from 'express';
+import { Response, Request } from 'express';
+import { AuthenticatedRequest } from '../types';
 import OrderModel from '../models/Order';
 import { createOrderSchema, updateOrderStatusSchema } from '../validations/orderValidation';
 
-export const createOrder = async (req: Request, res: Response): Promise<void> => {
+export const createOrder = async (
+  req: AuthenticatedRequest & { body: { name: string; quantity: number; branchId?: string } },
+  res: Response
+): Promise<void> => {
   try {
     const createdBy = req.user?.userId;
     const userRole = req.user?.role;
@@ -11,6 +16,21 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
 
     if (!createdBy) {
       res.status(401).json({ message: 'Yetkisiz' });
+      return;
+    }
+
+    if (!req.body) {
+      res.status(400).json({ message: 'Eksik istek gövdesi.' });
+      return;
+    }
+
+    // branchId zorunluysa kontrol et
+    if (
+      (userRole !== 'worker' && !req.body.branchId) ||
+      !req.body.name ||
+      typeof req.body.quantity !== 'number'
+    ) {
+      res.status(400).json({ message: 'Eksik veya hatalı alanlar.' });
       return;
     }
 
@@ -35,7 +55,10 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const deleteOrder = async (req: Request, res: Response): Promise<void> => {
+export const deleteOrder = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
   try {
     const userRole = req.user?.role;
     const userBranchId = req.user?.branchId;
@@ -64,7 +87,10 @@ export const deleteOrder = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const updateOrder = async (req: Request, res: Response): Promise<void> => {
+export const updateOrder = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
   try {
     const userRole = req.user?.role;
     const userBranchId = req.user?.branchId;
@@ -82,17 +108,18 @@ export const updateOrder = async (req: Request, res: Response): Promise<void> =>
         res.status(403).json({ message: 'Worker yalnızca kendi şubesindeki siparişi güncelleyebilir.' });
         return;
       }
-      if ('status' in req.body) {
+      if (req.body && 'status' in req.body) {
         res.status(403).json({ message: 'Worker sipariş durumunu değiştiremez.' });
         return;
       }
     }
 
-    if ('status' in req.body) {
+    if (req.body && 'status' in req.body) {
       updateOrderStatusSchema.parse({ status: req.body.status });
     }
 
-    const updated = await OrderModel.findByIdAndUpdate(orderId, req.body, { new: true });
+    const updateData = (req.body && typeof req.body === 'object') ? req.body : {};
+    const updated = await OrderModel.findByIdAndUpdate(orderId, updateData, { new: true });
     if (!updated) {
       res.status(404).json({ message: 'Sipariş bulunamadı.' });
       return;
@@ -108,7 +135,10 @@ export const updateOrder = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const getAllOrders = async (req: Request, res: Response): Promise<void> => {
+export const getAllOrders = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
   try {
     const userRole = req.user?.role;
     const userBranchId = req.user?.branchId;
@@ -117,7 +147,7 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
 
     if (userRole === 'worker') {
       query.branchId = userBranchId;
-    } 
+    }
 
     const orders = await OrderModel.find(query)
       .populate('branchId')
@@ -130,7 +160,10 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-export const updateOrderStatus = async (req: Request, res: Response): Promise<void> => {
+export const updateOrderStatus = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
   try {
     const userRole = req.user?.role;
 
@@ -157,7 +190,10 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
   }
 };
 
-export const deleteCompletedOrders = async (req: Request, res: Response): Promise<void> => {
+export const deleteCompletedOrders = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
   try {
     const userRole = req.user?.role;
 
