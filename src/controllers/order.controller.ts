@@ -3,7 +3,10 @@ import { Request, Response } from 'express';
 import OrderModel from '../models/Order';
 import { createOrderSchema, updateOrderStatusSchema } from '../validations/orderValidation';
 
-export const createOrder = async (req: Request, res: Response): Promise<void> => {
+export const createOrder = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const createdBy = req.user?.userId;
     const userRole = req.user?.role;
@@ -35,7 +38,10 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const deleteOrder = async (req: Request, res: Response): Promise<void> => {
+export const deleteOrder = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const userRole = req.user?.role;
     const userBranchId = req.user?.branchId;
@@ -64,7 +70,10 @@ export const deleteOrder = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const updateOrder = async (req: Request, res: Response): Promise<void> => {
+export const updateOrder = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const userRole = req.user?.role;
     const userBranchId = req.user?.branchId;
@@ -108,7 +117,10 @@ export const updateOrder = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const getAllOrders = async (req: Request, res: Response): Promise<void> => {
+export const getAllOrders = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const userRole = req.user?.role;
     const userBranchId = req.user?.branchId;
@@ -130,7 +142,10 @@ export const getAllOrders = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-export const updateOrderStatus = async (req: Request, res: Response): Promise<void> => {
+export const updateOrderStatus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const userRole = req.user?.role;
 
@@ -157,7 +172,10 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
   }
 };
 
-export const deleteCompletedOrders = async (req: Request, res: Response): Promise<void> => {
+export const deleteCompletedOrders = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const userRole = req.user?.role;
 
