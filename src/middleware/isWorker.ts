@@ -1,7 +1,6 @@
-import { Response, NextFunction } from 'express';
-import { AuthenticatedRequest } from '../types';
+import { Request, Response, NextFunction } from 'express';
 
-export const isWorker = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const isWorker = (req: Request, res: Response, next: NextFunction) => {
   if (req.user?.role !== 'worker') {
     return res.status(403).json({ message: 'Bu işlem sadece worker rolüne sahip kullanıcılar içindir.' });
   }
