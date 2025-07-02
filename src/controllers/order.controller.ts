@@ -209,3 +209,23 @@ export const deleteCompletedOrders = async (
     res.status(500).json({ message: 'Hazır siparişler silinemedi.', error: error.message });
   }
 };
+
+export const deleteCancelledOrders = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userRole = req.user?.role;
+
+    if (userRole !== 'super_admin') {
+      res.status(403).json({ message: 'Bu işlem sadece super admin tarafından yapılabilir.' });
+      return;
+    }
+
+    const result = await OrderModel.deleteMany({ status: 'iptal edildi' });
+
+    res.status(200).json({ message: `${result.deletedCount} iptal edilen siparişler silindi.` });
+  } catch (error: any) {
+    res.status(500).json({ message: 'İptal edilen siparişler silinemedi.', error: error.message });
+  }
+};

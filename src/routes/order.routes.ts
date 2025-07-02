@@ -5,7 +5,8 @@ import {
   updateOrder,
   deleteOrder,
   updateOrderStatus,
-  deleteCompletedOrders
+  deleteCompletedOrders,
+  deleteCancelledOrders
 } from '../controllers/order.controller';
 import { authenticateToken, isSuperAdmin, isAdmin } from '../middleware/authMiddleware';
 import { isWorker } from '../middleware/isWorker';
@@ -29,6 +30,8 @@ router.delete('/:orderId', authenticateToken, deleteOrder);
 router.put('/status/:orderId', authenticateToken, updateOrderStatus);
 
 // Sadece super admin: hazır siparişleri topluca siler
+// Sadece super admin: iptal edilmiş siparişleri topluca siler
 router.delete('/cleanup/completed', authenticateToken, isSuperAdmin, deleteCompletedOrders);
+router.delete('/cleanup/cancelled', authenticateToken, isSuperAdmin, deleteCancelledOrders);
 
 export default router;

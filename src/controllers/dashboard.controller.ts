@@ -11,6 +11,7 @@ export const getDashboardSummary = async (_req: Request, res: Response) => {
     const readyOrders = await Order.countDocuments({ status: 'hazır' });
     const inProgressOrders = await Order.countDocuments({ status: 'hazırlanıyor' });
     const pendingOrders = await Order.countDocuments({ status: 'beklemede' });
+    const cancelledOrders = await Order.countDocuments({ status: 'iptal edildi' });
 
     const totalUsers = await User.countDocuments();
     const admins = await User.countDocuments({ role: 'admin' });
@@ -23,7 +24,8 @@ export const getDashboardSummary = async (_req: Request, res: Response) => {
         total: totalOrders,
         ready: readyOrders,
         inProgress: inProgressOrders,
-        pending: pendingOrders
+        pending: pendingOrders,
+        cancelled: cancelledOrders
       },
       users: {
         total: totalUsers,
