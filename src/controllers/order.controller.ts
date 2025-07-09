@@ -6,7 +6,7 @@ import OrderModel from '../models/Order';
 import { createOrderSchema, updateOrderStatusSchema } from '../validations/orderValidation';
 
 export const createOrder = async (
-  req: AuthenticatedRequest & { body: { name: string; quantity: number; branchId?: string } },
+  req: AuthenticatedRequest & { body: { name: string; quantity: number; category: string; branchId?: string } },
   res: Response
 ): Promise<void> => {
   try {
@@ -28,7 +28,7 @@ export const createOrder = async (
     if (
       (userRole !== 'worker' && !req.body.branchId) ||
       !req.body.name ||
-      typeof req.body.quantity !== 'number'
+      typeof req.body.quantity !== 'number' || !req.body.category
     ) {
       res.status(400).json({ message: 'Eksik veya hatalı alanlar.' });
       return;
@@ -37,6 +37,7 @@ export const createOrder = async (
     const rawData = {
       name: req.body.name,
       quantity: req.body.quantity,
+      category: req.body.category,
       status: 'beklemede',
       createdBy,
       branchId: userRole === 'worker' ? userBranchId : req.body.branchId,
@@ -147,6 +148,11 @@ export const getAllOrders = async (
 
     if (userRole === 'worker') {
       query.branchId = userBranchId;
+    }
+
+    const categoryQuery = req.query.category as string | undefined;
+    if (categoryQuery && ['yaş pasta', 'tatlı', 'kuru pasta'].includes(categoryQuery)) {
+      query.category = categoryQuery;
     }
 
     const orders = await OrderModel.find(query)
