@@ -5,6 +5,7 @@ import { AuthenticatedRequest } from '../types';
 import OrderModel from '../models/Order';
 import { createOrderSchema, updateOrderStatusSchema } from '../validations/orderValidation';
 
+const ALLOWED_CATEGORIES = ['yaş pasta', 'tatlı', 'kuru pasta'] as const;
 export const createOrder = async (
   req: AuthenticatedRequest & { body: { name: string; quantity: number; category: string; branchId?: string } },
   res: Response
@@ -24,11 +25,17 @@ export const createOrder = async (
       return;
     }
 
-    // branchId zorunluysa kontrol et
+    const incomingCategory = req.body.category?.toString().trim();
+    const normalizedCategory = ALLOWED_CATEGORIES.find(
+      (c) => c.toLocaleLowerCase('tr') === incomingCategory?.toLocaleLowerCase('tr')
+    );
+
+    // branchId ve kategori zorunluysa kontrol et
     if (
       (userRole !== 'worker' && !req.body.branchId) ||
       !req.body.name ||
-      typeof req.body.quantity !== 'number' || !req.body.category
+      typeof req.body.quantity !== 'number' ||
+      !normalizedCategory
     ) {
       res.status(400).json({ message: 'Eksik veya hatalı alanlar.' });
       return;
@@ -37,7 +44,7 @@ export const createOrder = async (
     const rawData = {
       name: req.body.name,
       quantity: req.body.quantity,
-      category: req.body.category,
+      category: normalizedCategory,
       status: 'beklemede',
       createdBy,
       branchId: userRole === 'worker' ? userBranchId : req.body.branchId,
@@ -150,9 +157,14 @@ export const getAllOrders = async (
       query.branchId = userBranchId;
     }
 
-    const categoryQuery = req.query.category as string | undefined;
-    if (categoryQuery && ['yaş pasta', 'tatlı', 'kuru pasta'].includes(categoryQuery)) {
-      query.category = categoryQuery;
+    const categoryQuery = (req.query.category as string | undefined)?.toString().trim();
+    if (categoryQuery) {
+      const normalized = ALLOWED_CATEGORIES.find(
+        (c) => c.toLocaleLowerCase('tr') === categoryQuery.toLocaleLowerCase('tr')
+      );
+      if (normalized) {
+        query.category = normalized;
+      }
     }
 
     const orders = await OrderModel.find(query)
