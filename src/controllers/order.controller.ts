@@ -71,20 +71,14 @@ export const deleteOrder = async (
     const userRole = req.user?.role;
     const userBranchId = req.user?.branchId;
 
-    if (userRole === 'admin') {
-      res.status(403).json({ message: 'Admin kullanıcı sipariş silemez.' });
-      return;
+    if (userRole !== 'admin' && userRole !== 'super_admin') {
+      res.status(403).json({ message: 'Bu işlem için yetkiniz yok.' });
     }
 
     const order = await OrderModel.findById(req.params.orderId);
 
     if (!order) {
       res.status(404).json({ message: 'Sipariş bulunamadı.' });
-      return;
-    }
-
-    if (userRole === 'worker' && order.branchId.toString() !== userBranchId) {
-      res.status(403).json({ message: 'Worker yalnızca kendi şubesindeki siparişi silebilir.' });
       return;
     }
 
