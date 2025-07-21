@@ -11,7 +11,7 @@ import dashboardRoutes from './routes/dashboard.routes';
 
 // Ortam değişkenlerini yükle
 dotenv.config();
-console.log('process.env.FRONTEND_URL:', process.env.FRONTEND_URL);
+console.log('process.env.FRONTEND_URL:', process.env.FRONTEND_URL || 'http://localhost:5173');
 
 const app: Application = express();
 
